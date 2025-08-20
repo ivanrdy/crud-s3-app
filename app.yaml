@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-crud-s3
+  namespace: crud-s3-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-crud-s3
+  template:
+    metadata:
+      labels:
+        app: php-crud-s3
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: web
+          image: REGISTRY/ORG/php-crud-s3:1.0
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef: { name: db-cred }
+            - secretRef: { name: s3-cred }
+          readinessProbe:
+            httpGet: { path: /index.php?action=health, port: 8080 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /index.php?action=health, port: 8080 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-crud-s3
+  namespace: crud-s3-demo
+spec:
+  selector:
+    app: php-crud-s3
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: php-crud-s3
+  namespace: crud-s3-demo
+spec:
+  to: { kind: Service, name: php-crud-s3 }
+  port: { targetPort: http }
+  tls:
+    termination: edge

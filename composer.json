@@ -1,0 +1,11 @@
+{
+  "name": "demo/php-crud-s3",
+  "description": "Simple PHP CRUD with S3 uploads (OpenShift-ready)",
+  "type": "project",
+  "require": {
+    "aws/aws-sdk-php": "^3.300"
+  },
+  "autoload": {
+    "psr-4": {"App\\": "src/"}
+  }
+}
